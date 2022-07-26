@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Graph } from "react-d3-graph";
 import Button from "@material-ui/core/Button/Button";
 import Delete from "@material-ui/icons/Delete";
@@ -14,28 +14,36 @@ import AddOutlinedIcon from "@material-ui/icons/AddOutlined";
 import ArrowBackIcon from "@material-ui/icons/ArrowBack";
 import HelpOutlineIcon from "@material-ui/icons/HelpOutline";
 import { ControllerContainer } from "../styles/AutoFinStyles";
+import { useEffect } from "react";
 
-export default function AutoFin() {
-  const [nodes, setNodes] = useState([
+export default function AutoFin(props) {
+  const {state} = useLocation();
+  console.log({state})
+  const initialNodes = [
     { id: "q0", symbolType: "triangle" },
-    { id: "q1", color: "green" },
-    { id: "q2", color: "green" },
-  ]);
+    { id: "q1", color: "green", symbolType: "square" },
+    { id: "q2", color: "green", symbolType: "square" },
+  ];
 
-  const [transitions, setTransitions] = useState([
+  const initialTransitions = [
     { source: "q0", target: "q1", label: "a" },
     { source: "q0", target: "q2", label: "b" },
-  ]);
+  ]; 
 
-  const [transitionInput, setTransitionInput] = useState({
-    source: "",
-    target: "",
-    label: "λ",
-  });
+  const [nodes, setNodes] = useState(state?.nodes || initialNodes);
+
+  const [transitions, setTransitions] = useState(state?.transitions || initialTransitions);
+
+  const initialTransitionInput = { source: "", target: "", label: "λ" };
+
+  const [transitionInput, setTransitionInput] = useState(
+    initialTransitionInput
+  );
 
   const [deleteMode, setDeleteMode] = useState(false);
   const [inputs, setInputs] = useState([1]);
 
+  
   const myConfig = {
     nodeHighlightBehavior: true,
     linkHighlightBehavior: true,
@@ -103,7 +111,6 @@ export default function AutoFin() {
       charCode += 1;
       return node;
     });
-
     let grammar = [];
     for (let i = 0; i < tempTransitions.length; i++) {
       let initial = tempTransitions[i].source;
@@ -179,6 +186,12 @@ export default function AutoFin() {
     }
   };
 
+  const restart = () => {
+    setNodes(initialNodes);
+    setTransitions(initialTransitions);
+    setTransitionInput(initialTransitionInput);
+  };
+
   return (
     <div style={{ display: "flex" }}>
       <div
@@ -195,7 +208,13 @@ export default function AutoFin() {
           <p style={styles.text}>Autômato finito</p>
         </header>
         <ControllerContainer>
-          <div>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-around",
+              alignItems: "center",
+            }}
+          >
             <Button
               style={{ marginBottom: "15px" }}
               variant="contained"
@@ -210,6 +229,14 @@ export default function AutoFin() {
               }}
             >
               {`Adicionar estado q${nodes.length}`}
+            </Button>
+            <Button
+              style={{ maxHeight: 100 }}
+              variant="contained"
+              color="default"
+              onClick={() => restart()}
+            >
+              Recomeçar
             </Button>
           </div>
           <div style={{ display: "flex" }}>
@@ -273,14 +300,15 @@ export default function AutoFin() {
             Adicionar transição
           </Button>
         </ControllerContainer>
-            <Divider
-              color="inherit"
-              style={{ margin: "15px", width: "95%", alignSelf: "center" }}
-            />
+        <Divider
+          color="inherit"
+          style={{ margin: "15px", width: "95%", alignSelf: "center" }}
+        />
         <div style={{ display: "flex", flexDirection: "column" }}>
-            <p>Escreva uma entrada para testar</p>
-          {inputs.map(() => (
+          <p>Escreva uma entrada para testar</p>
+          {inputs.map((i, key) => (
             <input
+              key={`input-${key}`}
               type="text"
               placeholder="String"
               onChange={(strInput) => validate(strInput)}
@@ -291,7 +319,7 @@ export default function AutoFin() {
               style={styles.input}
             />
           ))}
-          <div style={{ display: "flex", justifyContent: 'center' }}>
+          <div style={{ display: "flex", justifyContent: "center" }}>
             <Tooltip title="Adicionar">
               <Button
                 style={styles.button}
